@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowUpRight, Users, Gift, Copy, Check } from "lucide-react";
+import { ArrowUpRight, Users, Gift, Copy, Check, X } from "lucide-react";
 
 export default function Referrals() {
   // Dummy data for referral program, aligned with project requirements

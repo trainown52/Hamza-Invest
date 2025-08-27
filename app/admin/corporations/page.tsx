@@ -50,7 +50,7 @@ export default function CorporationsPage() {
             <TBody>
               {rows.map((r) => (
                 <TR key={r.id}>
-                  <TD className="font-medium">{r.name}</TD>
+                  <TD >{r.name}</TD>
                   <TD>{r.ticker}</TD>
                   <TD>PKR {r.sharePrice.toFixed(2)}</TD>
                   <TD>{r.totalShares.toLocaleString()}</TD>

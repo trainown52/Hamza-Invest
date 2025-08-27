@@ -52,7 +52,7 @@ export default function Footer() {
             <h2 className="text-xl font-bold text-black">Hamza Invest</h2>
           </div>
           <p className="text-xs text-black leading-tight">
-            Your trusted platform for secure investments across Hamza Waheed's corporations. Empowering wealth with transparency.
+            Your trusted platform for secure investments across Hamza Waheed corporations. Empowering wealth with transparency.
           </p>
         </div>
 
@@ -80,11 +80,6 @@ export default function Footer() {
                 Dividends
               </Link>
             </li>
-            {/* <li>
-              <Link href="/company-inf" className="hover:text-gray-600 hover:underline transition">
-                Company Info
-              </Link>
-            </li> */}
             <li>
               <Link href="/reports" className="hover:text-gray-600 hover:underline transition">
                 Reports
@@ -95,11 +90,11 @@ export default function Footer() {
                 Support
               </Link>
             </li>
-            {/* <li>
-              <Link href="/settingsx" className="hover:text-gray-600 hover:underline transition">
+            <li>
+              <Link href="/settings" className="hover:text-gray-600 hover:underline transition">
                 Settings
               </Link>
-            </li> */}
+            </li>
           </ul>
         </div>
 

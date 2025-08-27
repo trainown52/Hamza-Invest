@@ -27,7 +27,7 @@ export default function SettingsPage() {
             </span>
             <Switch
               checked={twoFA}
-              onCheckedChange={(checked) => setTwoFA(checked)}
+              onChange={(checked) => setTwoFA(checked)}
             />
           </div>
 
@@ -37,7 +37,7 @@ export default function SettingsPage() {
             </span>
             <Switch
               checked={ipGuard}
-              onCheckedChange={(checked) => setIpGuard(checked)}
+              onChange={(checked) => setIpGuard(checked)}
             />
           </div>
 
@@ -47,7 +47,7 @@ export default function SettingsPage() {
             </span>
             <Switch
               checked={pinEnabled}
-              onCheckedChange={(checked) => setPinEnabled(checked)}
+              onChange={(checked) => setPinEnabled(checked)}
             />
           </div>
         </CardContent>

@@ -1,9 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, ChangeEvent, FormEvent } from "react";
+
+// ✅ Define form type
+interface KycForm {
+  fullName: string;
+  dob: string;
+  address: string;
+  country: string;
+  idType: string;
+  idNumber: string;
+  idFile: File | null;
+}
 
 export default function KycPage() {
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<KycForm>({
     fullName: "",
     dob: "",
     address: "",
@@ -14,15 +25,21 @@ export default function KycPage() {
   });
   const [submitted, setSubmitted] = useState(false);
 
-  function handleChange(e: { target: { name: any; value: any; files: any; }; }) {
-    const { name, value, files } = e.target;
+  // ✅ Strong typing for inputs + select + file
+  function handleChange(
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) {
+    const { name, value } = e.target;
+    const files = (e.target as HTMLInputElement).files;
+
     setForm((prev) => ({
       ...prev,
       [name]: files ? files[0] : value,
     }));
   }
 
-  async function handleSubmit(e: { preventDefault: () => void; }) {
+  // ✅ Strong typing for form submit
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const formData = new FormData();
     formData.append("fullName", form.fullName);
@@ -57,17 +74,30 @@ export default function KycPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-white px-6 py-12">
       <div className="w-full max-w-lg bg-white border border-gray-200 rounded-xl p-8 shadow-lg">
-        <h2 className="text-3xl font-bold text-black mb-2 text-center">KYC Verification</h2>
-        <p className="text-gray-600 mb-6 text-center">Complete your KYC to unlock all features</p>
+        <h2 className="text-3xl font-bold text-black mb-2 text-center">
+          KYC Verification
+        </h2>
+        <p className="text-gray-600 mb-6 text-center">
+          Complete your KYC to unlock all features
+        </p>
         {submitted ? (
           <div className="text-center py-10">
-            <h3 className="text-xl font-semibold text-black mb-2">Thank you!</h3>
-            <p className="text-gray-700">Your KYC details have been submitted for review.</p>
+            <h3 className="text-xl font-semibold text-black mb-2">
+              Thank you!
+            </h3>
+            <p className="text-gray-700">
+              Your KYC details have been submitted for review.
+            </p>
           </div>
         ) : (
           <form className="space-y-5" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+              <label
+                htmlFor="fullName"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Full Name
+              </label>
               <input
                 id="fullName"
                 name="fullName"
@@ -80,7 +110,12 @@ export default function KycPage() {
               />
             </div>
             <div>
-              <label htmlFor="dob" className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+              <label
+                htmlFor="dob"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Date of Birth
+              </label>
               <input
                 id="dob"
                 name="dob"
@@ -92,7 +127,12 @@ export default function KycPage() {
               />
             </div>
             <div>
-              <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+              <label
+                htmlFor="address"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Address
+              </label>
               <input
                 id="address"
                 name="address"
@@ -105,7 +145,12 @@ export default function KycPage() {
               />
             </div>
             <div>
-              <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+              <label
+                htmlFor="country"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Country
+              </label>
               <input
                 id="country"
                 name="country"
@@ -118,7 +163,12 @@ export default function KycPage() {
               />
             </div>
             <div>
-              <label htmlFor="idType" className="block text-sm font-medium text-gray-700 mb-1">ID Type</label>
+              <label
+                htmlFor="idType"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                ID Type
+              </label>
               <select
                 id="idType"
                 name="idType"
@@ -130,11 +180,16 @@ export default function KycPage() {
                 <option value="">Select ID type</option>
                 <option value="passport">Passport</option>
                 <option value="national_id">National ID</option>
-                <option value="driver_license">Driver's License</option>
+                <option value="driver_license">Drivers License</option>
               </select>
             </div>
             <div>
-              <label htmlFor="idNumber" className="block text-sm font-medium text-gray-700 mb-1">ID Number</label>
+              <label
+                htmlFor="idNumber"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                ID Number
+              </label>
               <input
                 id="idNumber"
                 name="idNumber"
@@ -147,7 +202,12 @@ export default function KycPage() {
               />
             </div>
             <div>
-              <label htmlFor="idFile" className="block text-sm font-medium text-gray-700 mb-1">Upload ID Document</label>
+              <label
+                htmlFor="idFile"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                Upload ID Document
+              </label>
               <input
                 id="idFile"
                 name="idFile"

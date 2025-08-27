@@ -89,7 +89,7 @@ export default function DividendsPage() {
                 <TH>Amount / Share</TH>
                 <TH>Pay Date</TH>
                 <TH>Status</TH>
-                <TH></TH>
+              
               </TR>
             </THead>
             <TBody>
