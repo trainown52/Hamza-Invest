@@ -1,9 +1,12 @@
-'use client'
+'use client';
 
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import LayoutWrapper from "./LayoutWrapper";
+import { useEffect } from "react";
+import { usePathname } from "next/navigation";
+import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,44 +18,38 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-
-import { useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
-import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
-
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const pathname = typeof window !== "undefined" ? window.location.pathname : "";
-  const router = typeof window !== "undefined" ? require("next/navigation").useRouter() : null;
+  const pathname = usePathname();
+  const noLayoutRoutes = ["/login", "/signup"];
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       const token = localStorage.getItem("token");
       const publicRoutes = ["/login", "/signup"];
-      // Always redirect new users (no token) to /login
-      if (!token && window.location.pathname !== "/login" && window.location.pathname !== "/signup") {
+      if (!token && !publicRoutes.includes(window.location.pathname)) {
         window.location.href = "/login";
       }
     }
   }, [pathname]);
+
+  const hideLayout = noLayoutRoutes.includes(pathname);
 
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
       >
-        {/* Navbar at top */}
-        <Navbar />
+        {/* Show Navbar only if not in login/signup */}
+        {!hideLayout && <Navbar />}
 
-        {/* Main content */}
-        <main className="flex-1 ">{children}</main>
+        <main className="flex-1">{children}</main>
 
-        {/* Footer at bottom */}
-        <Footer />
+        {/* Show Footer only if not in login/signup */}
+        {!hideLayout && <Footer />}
       </body>
     </html>
   );
