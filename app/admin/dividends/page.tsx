@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { dividends, corporations } from "../../lib/data";
 import {
   Card,
@@ -20,9 +21,32 @@ import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 
 export default function DividendsPage() {
+  const router = useRouter();
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [date, setDate] = useState("");
   const [amount, setAmount] = useState("");
   const [corp, setCorp] = useState(corporations[0]?.id ?? "");
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setIsAdmin(false);
+      router.replace("/login");
+      return;
+    }
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      setIsAdmin(payload.role === "admin");
+      if (payload.role !== "admin") {
+        router.replace("/");
+      }
+    } catch {
+      setIsAdmin(false);
+      router.replace("/login");
+    }
+  }, [router]);
+
+  if (isAdmin === false) return null;
 
   return (
     <main className="min-h-screen p-8 space-y-8 bg-gray-50">
@@ -89,6 +113,7 @@ export default function DividendsPage() {
                 <TH>Amount / Share</TH>
                 <TH>Pay Date</TH>
                 <TH>Status</TH>
+            
               
               </TR>
             </THead>

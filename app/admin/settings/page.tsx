@@ -1,12 +1,36 @@
 "use client";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Switch } from "../../components/ui/switch";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function SettingsPage() {
+  const router = useRouter();
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [twoFA, setTwoFA] = useState(false);
   const [ipGuard, setIpGuard] = useState(false);
   const [pinEnabled, setPinEnabled] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setIsAdmin(false);
+      router.replace("/login");
+      return;
+    }
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      setIsAdmin(payload.role === "admin");
+      if (payload.role !== "admin") {
+        router.replace("/");
+      }
+    } catch {
+      setIsAdmin(false);
+      router.replace("/login");
+    }
+  }, [router]);
+
+  if (isAdmin === false) return null;
 
   return (
     <div className="space-y-8 p-4">

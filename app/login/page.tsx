@@ -13,19 +13,34 @@ export default function LoginPage() {
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost:5000/api/auth/login", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password })
       });
       const data = await res.json();
       if (res.ok && data.token) {
-        localStorage.setItem("token", data.token);
-        toast.success("Login successful!");
         if (data.role === "admin") {
+          localStorage.setItem("token", data.token);
+          toast.success("Admin login successful!");
           router.push("/admin/dashboard");
-        } else {
+          return;
+        }
+        // Check KYC status for non-admin users
+        const kycRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/kyc?email=${encodeURIComponent(email)}`, {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${data.token}`,
+            "Content-Type": "application/json"
+          }
+        });
+        const kycData = await kycRes.json();
+        if (kycRes.ok && kycData.status === "approved") {
+          localStorage.setItem("token", data.token);
+          toast.success("Login successful!");
           router.push("/");
+        } else {
+          toast.error(kycData.status === "pending" ? "Your KYC is under review." : (kycData.status === "rejected" ? "Your KYC was rejected." : "KYC not found. Please complete KYC."));
         }
       } else {
         toast.error(data.message || "Login failed");
@@ -38,7 +53,7 @@ export default function LoginPage() {
   return (
     <>
       <Toaster position="top-right" />
-      <div className="min-h-screen flex items-center justify-center bg-white px-6 py-12">
+      <div className="min-h-screen mt-14 flex items-center justify-center bg-white px-6 py-12">
       <div className="relative z-10 w-full max-w-md">
         {/* Logo/Header */}
         <div className="mb-10 text-center">

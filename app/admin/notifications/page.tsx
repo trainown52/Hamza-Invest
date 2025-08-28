@@ -3,11 +3,35 @@ import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/ca
 import { Input } from "../../components/ui/input";
 import { Textarea } from "../../components/ui/textarea";
 import { Button } from "../../components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function NotificationsPage() {
+  const router = useRouter();
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [title, setTitle] = useState("");
   const [msg, setMsg] = useState("");
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setIsAdmin(false);
+      router.replace("/login");
+      return;
+    }
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      setIsAdmin(payload.role === "admin");
+      if (payload.role !== "admin") {
+        router.replace("/");
+      }
+    } catch {
+      setIsAdmin(false);
+      router.replace("/login");
+    }
+  }, [router]);
+
+  if (isAdmin === false) return null;
 
   return (
     <div className="space-y-8 p-4">

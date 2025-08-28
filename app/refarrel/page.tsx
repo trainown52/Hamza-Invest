@@ -51,7 +51,7 @@ export default function Referrals() {
 
   return (
     <section
-      className="relative bg-white text-black pt-24 pb-32 overflow-hidden"
+      className="relative bg-white mt-14 text-black pt-24 pb-32 overflow-hidden"
       aria-label="Referral Program Section"
     >
       {/* Background with Parallax Gradient */}

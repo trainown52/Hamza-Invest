@@ -71,7 +71,7 @@ export default function Hero() {
 
   return (
     <section
-      className="relative bg-white text-black pt-24 pb-32 overflow-hidden"
+      className="relative mt-14 bg-white text-black pt-24 pb-32 overflow-hidden"
       aria-label="Investment Platform Hero Section"
     >
       {/* Background with Parallax Gradient */}

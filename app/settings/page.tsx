@@ -132,7 +132,7 @@ const Settings: FC = () => {
 
   return (
     <ErrorBoundary>
-      <div className="bg-gray-100 min-h-screen p-6 md:p-8">
+      <div className="bg-gray-100 mt-14 min-h-screen p-6 md:p-8">
         <div className="max-w-7xl mx-auto bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">

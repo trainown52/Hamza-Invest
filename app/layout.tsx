@@ -1,3 +1,5 @@
+'use client'
+
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -13,18 +15,44 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Hamza Invest",
-  description: "A secure multi-corporation investment platform",
-};
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+import { useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  const pathname = typeof window !== "undefined" ? window.location.pathname : "";
+  const router = typeof window !== "undefined" ? require("next/navigation").useRouter() : null;
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("token");
+      const publicRoutes = ["/login", "/signup"];
+      // Always redirect new users (no token) to /login
+      if (!token && window.location.pathname !== "/login" && window.location.pathname !== "/signup") {
+        window.location.href = "/login";
+      }
+    }
+  }, [pathname]);
+
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
       >
-        <LayoutWrapper>{children}</LayoutWrapper>
+        {/* Navbar at top */}
+        <Navbar />
+
+        {/* Main content */}
+        <main className="flex-1 ">{children}</main>
+
+        {/* Footer at bottom */}
+        <Footer />
       </body>
     </html>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
 import {
   Card,
@@ -29,16 +30,38 @@ type Withdrawal = {
 };
 
 export default function WithdrawalsPage() {
+  const router = useRouter();
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setIsAdmin(false);
+      router.replace("/login");
+      return;
+    }
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      setIsAdmin(payload.role === "admin");
+      if (payload.role !== "admin") {
+        router.replace("/");
+      }
+    } catch {
+      setIsAdmin(false);
+      router.replace("/login");
+    }
+  }, [router]);
 
   useEffect(() => {
     async function fetchWithdrawals() {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch("http://localhost:5000/api/withdrawals", {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/withdrawals`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+
         const data = await res.json();
         setWithdrawals(data.withdrawals || []);
       } catch (err) {
@@ -54,7 +77,7 @@ export default function WithdrawalsPage() {
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(
-        `http://localhost:5000/api/withdrawals/${id}/status`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/withdrawals/${id}/status`,
         {
           method: "PUT",
           headers: {
@@ -76,6 +99,8 @@ export default function WithdrawalsPage() {
       toast.error("Network error");
     }
   }
+
+  if (isAdmin === false) return null;
 
   return (
     <main className="min-h-screen p-8 space-y-8 bg-gray-50">
@@ -101,7 +126,7 @@ export default function WithdrawalsPage() {
                   <TH>Method</TH>
                   <TH>Status</TH>
                   <TH>Requested</TH>
-                
+
                 </TR>
               </THead>
               <TBody>
@@ -113,13 +138,12 @@ export default function WithdrawalsPage() {
                     </TD>
                     <TD className="capitalize">{w.method}</TD>
                     <TD
-                      className={`capitalize font-medium ${
-                        w.status === "approved"
+                      className={`capitalize font-medium ${w.status === "approved"
                           ? "text-green-600"
                           : w.status === "pending"
-                          ? "text-yellow-600"
-                          : "text-red-600"
-                      }`}
+                            ? "text-yellow-600"
+                            : "text-red-600"
+                        }`}
                     >
                       {w.status}
                     </TD>

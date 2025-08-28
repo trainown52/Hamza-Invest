@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 // Mock user role check (replace with actual auth logic)
 const isAdmin = false; // Placeholder: Replace with actual auth check (e.g., from context or auth provider)
@@ -11,15 +11,55 @@ const isAdmin = false; // Placeholder: Replace with actual auth check (e.g., fro
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
+    setIsMounted(true);
+    const token = localStorage.getItem("token");
+    setIsLoggedIn(!!token);
+    
+    // Listen for login/logout changes
+    const checkLogin = () => {
+      setIsLoggedIn(!!localStorage.getItem("token"));
+    };
+    
+    // Listen for custom events and storage changes
+    window.addEventListener("storage", checkLogin);
+    window.addEventListener("login", checkLogin);
+    window.addEventListener("logout", checkLogin);
+    
+    // Handle scroll effect
     const handleScroll = () => {
       setScrolled(window.scrollY > 10);
     };
     window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    
+    return () => {
+      window.removeEventListener("storage", checkLogin);
+      window.removeEventListener("login", checkLogin);
+      window.removeEventListener("logout", checkLogin);
+      window.removeEventListener("scroll", handleScroll);
+    };
   }, []);
+
+  // This ensures we don't render auth-dependent UI until after hydration
+  useEffect(() => {
+    if (isMounted) {
+      const token = localStorage.getItem("token");
+      setIsLoggedIn(!!token);
+    }
+  }, [isMounted, pathname]); // Also check on route changes
+
+  function handleLogout() {
+    localStorage.removeItem("token");
+    setIsLoggedIn(false);
+    window.dispatchEvent(new Event("logout"));
+    setIsOpen(false);
+    router.replace("/login");
+  }
 
   const clientNavItems = [
     { name: "Home", href: "/" },
@@ -28,10 +68,23 @@ export default function Navbar() {
     { name: "Dividends", href: "/dividends" },
     // { name: "Company Info", href: "/company-infos" },
     { name: "Reports", href: "/reports" },
-    { name: "KYC", href: "/kyc" },
-    { name: "Withdraw", href: "/withdrawals" }, // <-- Add Withdraw button
+    { name: "Withdraw", href: "/withdrawals" },
     // { name: "Settings", href: "/setting" },
   ];
+
+  function handleNavClick(href: string) {
+    if (!isLoggedIn && href !== "/login" && href !== "/signup") {
+      // Prevent navigation and show toast
+      if (typeof window !== "undefined") {
+        import("react-hot-toast").then(({ default: toast }) => {
+          toast.error("Please login to access this page.");
+        });
+      }
+      router.replace("/login");
+      return;
+    }
+    router.push(href);
+  }
 
   const adminNavItems = [
     { name: "Admin Dashboard", href: "/admin/dashboard" },
@@ -44,6 +97,37 @@ export default function Navbar() {
 
   const navItems = isAdmin ? [...clientNavItems, ...adminNavItems] : clientNavItems;
 
+  // Hide Navbar on admin pages
+  if (pathname.startsWith('/admin')) {
+    // Do not render anything, not even a nav element
+    return <></>;
+  }
+
+  // Don't render auth-dependent UI until after component mounts
+  if (!isMounted) {
+    return (
+      <nav className="backdrop-blur-md bg-white/90 text-black border-b border-gray-200 w-full fixed z-50">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+          <div className="flex justify-between items-center h-16">
+            <div className="w-32 h-6 bg-gray-200 rounded animate-pulse"></div>
+            <div className="hidden md:flex space-x-1">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="w-16 h-6 bg-gray-200 rounded animate-pulse"></div>
+              ))}
+            </div>
+            <div className="hidden md:flex space-x-3">
+              <div className="w-16 h-9 bg-gray-200 rounded animate-pulse"></div>
+              <div className="w-16 h-9 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+            <div className="md:hidden">
+              <div className="w-8 h-8 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+          </div>
+        </div>
+      </nav>
+    );
+  }
+
   return (
     <nav
       className={`backdrop-blur-md bg-white/90 text-black border-b border-gray-200 w-full fixed z-50 transition-all duration-300 ${
@@ -53,46 +137,70 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2 group">
+          <button
+            className="flex items-center space-x-2 group bg-transparent border-none outline-none cursor-pointer"
+            onClick={() => {
+              if (!isLoggedIn) {
+                import("react-hot-toast").then(({ default: toast }) => {
+                  toast.error("Please login to access this page.");
+                });
+                router.replace("/login");
+                return;
+              }
+              router.push("/");
+            }}
+          >
             <span className="text-2xl font-bold text-black group-hover:opacity-80 transition-opacity">
               Hamza Invest
             </span>
-          </Link>
+          </button>
 
           {/* Desktop Menu */}
           <div className="hidden md:flex space-x-1">
             {navItems.map((item) => (
-              <Link
+              <button
                 key={item.name}
-                href={item.href}
-                className={`px-3 py-2 text-sm font-medium rounded-md transition-all ${
+                onClick={() => handleNavClick(item.href)}
+                className={`px-3 py-2 text-sm font-medium rounded-md transition-all bg-transparent border-none outline-none cursor-pointer ${
                   pathname === item.href
                     ? "bg-black/5 text-black font-semibold"
                     : "text-gray-600 hover:text-black hover:bg-black/5"
                 }`}
+                style={{ background: "none" }}
               >
                 {item.name}
                 {pathname === item.href && (
                   <span className="block mx-auto mt-1 w-1 h-1 bg-black rounded-full"></span>
                 )}
-              </Link>
+              </button>
             ))}
           </div>
 
           {/* Auth Buttons */}
           <div className="hidden md:flex items-center space-x-3">
-            <Link
-              href="/login"
-              className="px-4 py-2 text-sm rounded-lg border border-gray-300 text-black hover:bg-black hover:text-white transition-all duration-200 hover:shadow-md"
-            >
-              Login
-            </Link>
-            <Link
-              href="/signup"
-              className="px-4 py-2 text-sm rounded-lg bg-black text-white hover:bg-gray-800 transition-all duration-200 hover:shadow-md transform hover:-translate-y-0.5"
-            >
-              Sign Up
-            </Link>
+            {isLoggedIn ? (
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 text-sm rounded-lg bg-black text-white cursor-pointer transition-all duration-200 hover:shadow-md"
+              >
+                Logout
+              </button>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="px-4 py-2 text-sm rounded-lg border border-gray-300 text-black hover:bg-black hover:text-white transition-all duration-200 hover:shadow-md"
+                >
+                  Login
+                </Link>
+                <Link
+                  href="/signup"
+                  className="px-4 py-2 text-sm rounded-lg bg-black text-white hover:bg-gray-800 transition-all duration-200 hover:shadow-md transform hover:-translate-y-0.5"
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Hamburger */}
@@ -116,34 +224,45 @@ export default function Navbar() {
       {isOpen && (
         <div className="md:hidden bg-white border-t border-gray-200 px-6 py-4 space-y-3 animate-in fade-in slide-in-from-top-5">
           {navItems.map((item) => (
-            <Link
+            <button
               key={item.name}
-              href={item.href}
-              className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+              onClick={() => { setIsOpen(false); handleNavClick(item.href); }}
+              className={`block px-3 py-2 rounded-md text-base font-medium transition-colors bg-transparent border-none outline-none cursor-pointer ${
                 pathname === item.href
                   ? "bg-black/10 text-black font-semibold"
                   : "text-gray-600 hover:bg-black/5 hover:text-black"
               }`}
-              onClick={() => setIsOpen(false)}
+              style={{ background: "none" }}
             >
               {item.name}
-            </Link>
+            </button>
           ))}
           <div className="flex space-x-3 pt-4">
-            <Link
-              href="/login"
-              className="flex-1 text-center px-4 py-2 text-sm rounded-lg border border-gray-300 text-black hover:bg-black hover:text-white transition-colors"
-              onClick={() => setIsOpen(false)}
-            >
-              Login
-            </Link>
-            <Link
-              href="/signup"
-              className="flex-1 text-center px-4 py-2 text-sm rounded-lg bg-black text-white hover:bg-gray-800 transition-colors"
-              onClick={() => setIsOpen(false)}
-            >
-              Sign Up
-            </Link>
+            {isLoggedIn ? (
+              <button
+                onClick={() => { setIsOpen(false); handleLogout(); }}
+                className="flex-1 text-center px-4 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors"
+              >
+                Logout
+              </button>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="flex-1 text-center px-4 py-2 text-sm rounded-lg border border-gray-300 text-black hover:bg-black hover:text-white transition-colors"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Login
+                </Link>
+                <Link
+                  href="/signup"
+                  className="flex-1 text-center px-4 py-2 text-sm rounded-lg bg-black text-white hover:bg-gray-800 transition-colors"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}

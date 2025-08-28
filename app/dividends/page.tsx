@@ -282,7 +282,7 @@ export default function Dividends() {
   }
 
   return (
-    <div className="bg-white min-h-screen p-6 md:p-8">
+    <div className="bg-white min-h-screen mt-14 p-6 md:p-8">
       <div className="max-w-7xl mx-auto bg-white rounded-lg border border-gray-300 p-6 md:p-8">
         {/* Header */}
         <div className="mb-10">

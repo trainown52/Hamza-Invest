@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import StatCard from "../../components/common/StatCard";
 import AreaTrend from "../../components/charts/AreaTrend";
 import BarByCompany from "../../components/charts/BarByCompany";
@@ -11,6 +13,31 @@ import {
 } from "../../components/ui/card";
 
 export default function DashboardPage() {
+  const router = useRouter();
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setIsAdmin(false);
+      router.replace("/login");
+      return;
+    }
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      setIsAdmin(payload.role === "admin");
+      if (payload.role !== "admin") {
+        router.replace("/");
+      }
+    } catch {
+      setIsAdmin(false);
+      router.replace("/login");
+    }
+  }, [router]);
+
+  if (isAdmin === null) return null; // Don't render until check is complete
+  if (isAdmin === false) return null;
+
   const kpis = [
     { label: "Total Clients", value: 1240, hint: "+3.2% vs last month" },
     { label: "Total Investment Raised", value: "PKR 984M", hint: "+1.1% WoW" },

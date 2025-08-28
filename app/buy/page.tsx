@@ -145,7 +145,7 @@ export default function TradeComponent() {
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen p-6 md:p-10">
+    <div className="bg-gray-50 mt-14 min-h-screen p-6 md:p-10">
       <div className="max-w-7xl mx-auto bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
