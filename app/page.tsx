@@ -1,14 +1,18 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowUpRight, BarChart2, ShieldCheck, FileText, DivideCircle, UserCheck, PieChart, MessageSquare, Smartphone, Lock } from "lucide-react";
 import { Building2, TrendingUp, Users } from "lucide-react";
 // Adjust path as needed
 import Features from "./components/Feature";
 import HowItWorks from "./components/HowItsWork";
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
+import "./scrollbar-hide.css";
+import Link from 'next/link';
+import { X } from 'lucide-react';
+import axios from 'axios';
 
 const Globe = dynamic(() => import("react-globe.gl"), { ssr: false });
 export default function Hero() {
@@ -32,42 +36,55 @@ export default function Hero() {
     { value: "$850k", label: "Dividends Paid", icon: <DivideCircle className="h-5 w-5 text-black" /> },
   ];
 
-  const corporationsData = [
-    { name: "TechCorp", desc: "Innovative tech solutions", shares: "100K available" },
-    { name: "GreenEnergy", desc: "Sustainable energy projects", shares: "50K available" },
-    { name: "HealthWave", desc: "Healthcare advancements", shares: "75K available" },
-  ];
+  // Show only 3 companies for preview
+  const [companies, setCompanies] = useState<any[]>([]);
+  const [loadingCompanies, setLoadingCompanies] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState<any | null>(null);
+
+  useEffect(() => {
+    const fetchCompanies = async () => {
+      setLoadingCompanies(true);
+      try {
+        const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
+        const res = await axios.get<any[]>(`${API_BASE}/api/companies`);
+        setCompanies(Array.isArray(res.data) ? res.data : []);
+      } catch {
+        setCompanies([]);
+      }
+      setLoadingCompanies(false);
+    };
+    fetchCompanies();
+  }, []);
+
+  const openModal = (company: any) => {
+    setSelectedCompany(company);
+    setIsModalOpen(true);
+  };
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedCompany(null);
+  };
 
 
-  const organizations = [
-    {
-      name: "Green Energy Corp",
-      description:
-        "A leader in renewable energy solutions. Invest in solar, wind & hydro projects for a sustainable future.",
-      profit: "12.4%",
-      investors: "24k+",
-      growth: "18% YoY",
-      icon: <TrendingUp className="w-10 h-10 text-green-500" />,
-    },
-    {
-      name: "Health Plus",
-      description:
-        "Expanding healthcare facilities and digital health platforms across multiple regions.",
-      profit: "9.8%",
-      investors: "15k+",
-      growth: "12% YoY",
-      icon: <Users className="w-10 h-10 text-blue-500" />,
-    },
-    {
-      name: "Tech Innovators",
-      description:
-        "Revolutionizing AI & Blockchain for businesses worldwide. Be part of the digital future.",
-      profit: "15.7%",
-      investors: "30k+",
-      growth: "22% YoY",
-      icon: <Building2 className="w-10 h-10 text-purple-500" />,
-    },
-  ];
+  // Live organizations data (companies)
+  const [organizations, setOrganizations] = useState<any[]>([]);
+  const [loadingOrgs, setLoadingOrgs] = useState(false);
+
+  useEffect(() => {
+    const fetchOrgs = async () => {
+      setLoadingOrgs(true);
+      try {
+        const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
+        const res = await axios.get<any[]>(`${API_BASE}/api/companies`);
+        setOrganizations(Array.isArray(res.data) ? res.data : []);
+      } catch {
+        setOrganizations([]);
+      }
+      setLoadingOrgs(false);
+    };
+    fetchOrgs();
+  }, []);
 
   return (
     <section
@@ -245,26 +262,173 @@ export default function Hero() {
       >
         <h2 className="text-xl sm:text-2xl font-bold text-black mb-6">Featured Corporations</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {corporationsData.map((corp, index) => (
-            <motion.div
-              key={index}
-              className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-md border border-gray-200/50 hover:shadow-lg transition-all"
-              whileHover={{ scale: 1.05 }}
-              transition={{ duration: 0.2 }}
-            >
-              <h3 className="text-lg font-semibold text-black">{corp.name}</h3>
-              <p className="text-sm text-gray-700 mt-2">{corp.desc}</p>
-              <p className="text-sm font-medium text-gray-600 mt-2">{corp.shares}</p>
-              <Link
-                href={`/corporations/${corp.name.toLowerCase()}`}
-                className="mt-4 inline-block text-sm font-medium text-black hover:text-gray-600 underline"
-                aria-label={`View details for ${corp.name}`}
+          {loadingCompanies ? (
+            <div className="text-black">Loading corporations…</div>
+          ) : companies.length === 0 ? (
+            <div className="text-black">No corporations found.</div>
+          ) : (
+            companies.slice(0, 3).map((corp, index) => (
+              <motion.div
+                key={corp._id || index}
+                className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-md border border-gray-200/50 hover:shadow-lg transition-all"
+                whileHover={{ scale: 1.05 }}
+                transition={{ duration: 0.2 }}
               >
-                View Details
-              </Link>
-            </motion.div>
-          ))}
+                {corp.logo && (
+                  <div className="flex justify-center mb-3">
+                    <img src={`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000"}${corp.logo}`} alt={corp.name + " logo"} className="w-24 h-24 object-contain rounded" />
+                  </div>
+                )}
+                <h3 className="text-lg font-semibold text-black text-center">{corp.name}</h3>
+                <p className="text-sm text-gray-700 mt-2 text-center">{corp.description || corp.industry || "No description"}</p>
+                <p className="text-sm font-medium text-gray-600 mt-2 text-center">
+                  {corp.shares?.total ? `${corp.shares.total.toLocaleString()} shares available` : "Shares info unavailable"}
+                </p>
+                <button
+                  className="mt-4 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition w-full font-medium cursor-pointer"
+                  onClick={() => openModal(corp)}
+                >
+                  View More
+                </button>
+              </motion.div>
+            ))
+          )}
         </div>
+      {/* Modal for Corporation Details */}
+  {isModalOpen && selectedCompany && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    {/* Enhanced Backdrop */}
+    <div
+      className="fixed inset-0 bg-black/20 backdrop-blur-md transition-opacity duration-300"
+      onClick={closeModal}
+    ></div>
+
+    {/* Modal Container */}
+    <div className="relative z-50 w-full max-w-3xl bg-white rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-8 max-h-[90vh] overflow-y-auto scrollbar-hide transform transition-all duration-300 scale-100 opacity-100">
+      
+      {/* Close Button */}
+      <button
+        onClick={closeModal}
+        className="absolute cursor-pointer top-4 right-4 p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors duration-200 shadow-sm"
+      >
+        <X className="w-5 h-5 text-gray-600" />
+      </button>
+
+      {/* Logo Image */}
+      {selectedCompany.logo && (
+        <div className="flex justify-center mb-6">
+          <div className="w-44 h-32 relative mx-auto rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+            <Image
+              src={`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000"}${selectedCompany.logo}`}
+              alt={selectedCompany.name + " logo"}
+              fill
+              className="object-cover"
+              priority
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Company Name and Industry */}
+      <h2 className="text-3xl sm:text-4xl font-bold text-center text-gray-900 mb-2">
+        {selectedCompany.name}
+      </h2>
+      <div className="text-center text-gray-500 text-base mb-6">
+        {selectedCompany.industry}
+      </div>
+
+      {/* Description */}
+      <div className="prose prose-lg max-w-none mx-auto text-gray-700 mb-8 text-center px-4">
+        <p>{selectedCompany.description}</p>
+      </div>
+
+      {/* Shares & Financials */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        {/* Shares Card */}
+        <div className="bg-gray-50 p-5 rounded-xl border border-gray-100 shadow-sm">
+          <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            Shares
+          </h3>
+          <ul className="space-y-2 text-gray-700">
+            <li className="flex justify-between"><span className="font-medium">Total:</span> {selectedCompany.shares?.total ?? 'N/A'}</li>
+            <li className="flex justify-between"><span className="font-medium">Available:</span> {selectedCompany.shares?.available ?? 'N/A'}</li>
+            <li className="flex justify-between"><span className="font-medium">Price Per Share:</span> PKR {selectedCompany.shares?.pricePerShare ?? 'N/A'}</li>
+            <li className="flex justify-between"><span className="font-medium">Min Investment:</span> {selectedCompany.shares?.minInvestmentShares ?? 'N/A'}</li>
+          </ul>
+        </div>
+        
+        {/* Financials Card */}
+        <div className="bg-gray-50 p-5 rounded-xl border border-gray-100 shadow-sm">
+          <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Financials
+          </h3>
+          <ul className="space-y-2 text-gray-700">
+            <li className="flex justify-between"><span className="font-medium">Annual Revenue:</span> PKR {selectedCompany.financials?.annualRevenue ?? 'N/A'}</li>
+            <li className="flex justify-between"><span className="font-medium">Annual Profit/Loss:</span> {selectedCompany.financials?.annualProfitLoss ?? 'N/A'}%</li>
+            <li className="flex justify-between"><span className="font-medium">Growth Rate:</span> {selectedCompany.financials?.growthRate ?? 'N/A'}%</li>
+            <li className="flex justify-between"><span className="font-medium">Valuation:</span> PKR {selectedCompany.financials?.valuation ?? 'N/A'}</li>
+          </ul>
+        </div>
+      </div>
+
+      {/* Legal & Other Info */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        {/* Legal Card */}
+        <div className="bg-gray-50 p-5 rounded-xl border border-gray-100 shadow-sm">
+          <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+            Legal
+          </h3>
+          <ul className="space-y-2 text-gray-700">
+            <li className="flex justify-between"><span className="font-medium">Registration #:</span> {selectedCompany.legal?.registrationNumber ?? 'N/A'}</li>
+            <li className="flex justify-between"><span className="font-medium">Incorporation Date:</span> {selectedCompany.legal?.incorporationDate ? new Date(selectedCompany.legal.incorporationDate).toLocaleDateString() : 'N/A'}</li>
+            <li className="flex justify-between"><span className="font-medium">Country:</span> {selectedCompany.legal?.country ?? 'N/A'}</li>
+          </ul>
+        </div>
+        
+        {/* Other Info Card */}
+        <div className="bg-gray-50 p-5 rounded-xl border border-gray-100 shadow-sm">
+          <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Other Info
+          </h3>
+          <ul className="space-y-2 text-gray-700">
+            <li className="flex justify-between"><span className="font-medium">Location:</span> {selectedCompany.location ?? 'N/A'}</li>
+            <li className="flex justify-between"><span className="font-medium">Website:</span> {selectedCompany.website ?? 'N/A'}</li>
+            <li className="flex justify-between"><span className="font-medium">Created:</span> {selectedCompany.createdAt ? new Date(selectedCompany.createdAt).toLocaleDateString() : 'N/A'}</li>
+            <li className="flex justify-between"><span className="font-medium">Updated:</span> {selectedCompany.updatedAt ? new Date(selectedCompany.updatedAt).toLocaleDateString() : 'N/A'}</li>
+          </ul>
+        </div>
+      </div>
+
+      {/* Extra Info Section */}
+      <div className="bg-gray-50 rounded-xl p-5 mb-8 text-center text-gray-700 border border-gray-100 shadow-sm">
+        <span className="font-semibold text-black">Why invest in {selectedCompany.name}?</span> <br />
+        {selectedCompany.name} is a trusted corporation in the {selectedCompany.industry}. With a strong growth rate and solid financials, it's a great opportunity for investors looking for long-term returns and stability.
+        {/* Buy Now Button */}
+      <div className="flex justify-center mt-6">
+        <Link href="/buy">
+          <button className="px-8 py-3 bg-black text-white rounded-xl font-semibold hover:bg-gray-800 transition-all duration-300 cursor-pointer text-lg shadow-md hover:shadow-lg">
+            Buy Now
+          </button>
+        </Link>
+      </div>
+      </div>
+
+      
+    </div>
+  </div>
+)}
       </motion.div>
 
 
@@ -305,35 +469,45 @@ export default function Hero() {
 
           {/* Cards Section */}
           <div className="grid gap-10 md:grid-cols-3 mt-10">
-            {organizations.map((org, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.2 }}
-                viewport={{ once: true }}
-                className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-2xl hover:scale-105 transition-all duration-300 border border-gray-100 relative z-20"
-              >
-                <div className="flex justify-center mb-5">{org.icon}</div>
-                <h3 className="text-2xl font-semibold text-gray-900 mb-3">{org.name}</h3>
-                <p className="text-gray-600 text-sm mb-6">{org.description}</p>
+            {loadingOrgs ? (
+              <div className="text-black">Loading organizations…</div>
+            ) : organizations.length === 0 ? (
+              <div className="text-black">No organizations found.</div>
+            ) : (
+              organizations.map((org, index) => (
+                <motion.div
+                  key={org._id || index}
+                  initial={{ opacity: 0, y: 50 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: index * 0.2 }}
+                  viewport={{ once: true }}
+                  className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-2xl hover:scale-105 transition-all duration-300 border border-gray-100 relative z-20"
+                >
+                  {org.logo && (
+                    <div className="flex justify-center mb-5">
+                      <img src={`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000"}${org.logo}`} alt={org.name + " logo"} className="w-24 h-18 object-contain rounded" />
+                    </div>
+                  )}
+                  <h3 className="text-2xl font-semibold text-gray-900 mb-3">{org.name}</h3>
+                  <p className="text-gray-600 text-sm mb-6">{org.description || org.industry || "No description"}</p>
 
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  <div>
-                    <p className="text-lg font-bold text-green-600">{org.profit}</p>
-                    <p className="text-xs text-gray-500">Annual Profit</p>
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                      <p className="text-lg font-bold text-green-600">{org.financials?.annualProfitLoss ? `${org.financials.annualProfitLoss}%` : "N/A"}</p>
+                      <p className="text-xs text-gray-500">Annual Profit</p>
+                    </div>
+                    <div>
+                      <p className="text-lg font-bold text-blue-600">{org.investors || org.shares?.available ? `${org.shares.available?.toLocaleString() || "N/A"}` : "N/A"}</p>
+                      <p className="text-xs text-gray-500">Investors</p>
+                    </div>
+                    <div>
+                      <p className="text-lg font-bold text-purple-600">{org.financials?.growthRate ? `${org.financials.growthRate}%` : "N/A"}</p>
+                      <p className="text-xs text-gray-500">Growth</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-lg font-bold text-blue-600">{org.investors}</p>
-                    <p className="text-xs text-gray-500">Investors</p>
-                  </div>
-                  <div>
-                    <p className="text-lg font-bold text-purple-600">{org.growth}</p>
-                    <p className="text-xs text-gray-500">Growth</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              ))
+            )}
           </div>
         </div>
       </section>

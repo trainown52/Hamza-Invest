@@ -53,7 +53,7 @@ export default function LoginPage() {
   return (
     <>
       <Toaster position="top-right" />
-      <div className="min-h-screen mt-14 flex items-center justify-center bg-white px-6 py-12">
+      <div className="min-h-screen  flex items-center justify-center bg-white px-6 py-12">
       <div className="relative z-10 w-full max-w-md">
         {/* Logo/Header */}
         <div className="mb-10 text-center">
